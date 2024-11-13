@@ -14,7 +14,7 @@ function Logout() {
     setTimeout(() => {
       setIsPending(false);
       alert("Logged out successfully!");
-      window.location.href = "./LoginForm.jsx";
+      window.location.href = "./Login";
     }, 1000);
   }
 

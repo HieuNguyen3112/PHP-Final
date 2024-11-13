@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../../ui/Button";
 import Form from "../../ui/Form";
 import Input from "../../ui/Input";
@@ -10,6 +11,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate(); // Dùng để điều hướng
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -27,6 +29,11 @@ function LoginForm() {
     setTimeout(() => {
       if (email === mockEmail && password === mockPassword) {
         setMessage("Login successful!");
+        
+        // Chuyển hướng đến trang dashboard sau 1.5 giây
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       } else {
         setMessage("Invalid email or password.");
       }
@@ -61,6 +68,8 @@ function LoginForm() {
           {!isPending ? "Log in" : <SpinnerMini />}
         </Button>
       </FormRowVertical>
+      
+      {/* Hiển thị thông báo */}
       {message && <p>{message}</p>}
     </Form>
   );
