@@ -7,6 +7,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CabinController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\DashboardController;
+
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -28,6 +31,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 Route::post('/create-user', [AuthController::class, 'createUser']);
 Route::put('/user/update-data', [AuthController::class, 'updateUserData'])->middleware('auth:sanctum');
 Route::put('/user/update-password', [AuthController::class, 'updatePassword'])->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->get('/current-user', [AuthController::class, 'currentUser']);
+Route::middleware('auth:sanctum')->get('/all-users', [AuthController::class, 'getAllUsers']);
+
 
 
 //Booking controller router
@@ -44,3 +50,5 @@ Route::put('/cabins/{id}', [CabinController::class, 'update']);
 Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
+//other router
+Route::get('/dashboard', [DashboardController::class, 'index']);

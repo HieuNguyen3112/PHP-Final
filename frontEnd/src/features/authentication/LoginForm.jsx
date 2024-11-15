@@ -5,41 +5,35 @@ import Form from "../../ui/Form";
 import Input from "../../ui/Input";
 import FormRowVertical from "../../ui/FormRowVertical";
 import SpinnerMini from "../../ui/SpinnerMini";
+import useLogin from "../../api/useLogin"; 
 
 function LoginForm() {
+  const { handleLogin, loading, error } = useLogin(); 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isPending, setIsPending] = useState(false);
+  const navigate = useNavigate(); 
   const [message, setMessage] = useState("");
-  const navigate = useNavigate(); // Dùng để điều hướng
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!email || !password) {
-      setMessage("Please enter both email and password.");
-      return;
+        setMessage("Please enter both email and password.");
+        return;
     }
 
-    // Dữ liệu tĩnh tạm thời cho kiểm tra đăng nhập
-    const mockEmail = "admin@example.com";
-    const mockPassword = "password123";
+    // Gọi API đăng nhập từ handleLogin
+    const success = await handleLogin(email, password);
 
-    setIsPending(true);
-
-    setTimeout(() => {
-      if (email === mockEmail && password === mockPassword) {
+    if (success) {
         setMessage("Login successful!");
-        
-        // Chuyển hướng đến trang dashboard sau 1.5 giây
         setTimeout(() => {
-          navigate("/dashboard");
+            navigate("/dashboard");
         }, 1500);
-      } else {
-        setMessage("Invalid email or password.");
-      }
-      setIsPending(false);
-    }, 1000);
-  }
+    } else {
+        setMessage(error || "Invalid email or password.");
+    }
+}
+
 
   return (
     <Form onSubmit={handleSubmit}>
@@ -50,7 +44,7 @@ function LoginForm() {
           autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          disabled={isPending}
+          disabled={loading}
         />
       </FormRowVertical>
       <FormRowVertical label="Password">
@@ -60,12 +54,12 @@ function LoginForm() {
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          disabled={isPending}
+          disabled={loading}
         />
       </FormRowVertical>
       <FormRowVertical>
-        <Button size="large" disabled={isPending}>
-          {!isPending ? "Log in" : <SpinnerMini />}
+        <Button size="large" disabled={loading}>
+          {!loading ? "Log in" : <SpinnerMini />}
         </Button>
       </FormRowVertical>
       

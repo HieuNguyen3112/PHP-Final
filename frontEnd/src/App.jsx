@@ -9,6 +9,7 @@ import Cabins from "./pages/Cabins";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import GlobalStyles from "./styles/GlobalSyles";
 import AppLayout from "./ui/AppLayout";
+import ProtectedRoute from "./api/ProtectedRoute"; 
 
 function App() {
   return (
@@ -17,15 +18,61 @@ function App() {
 
       <BrowserRouter>
         <Routes>
+          {/* Trang chính có AppLayout */}
           <Route element={<AppLayout />}>
             <Route path="/" element={<Navigate to="/dashboard" />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/bookings" element={<Bookings />} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/cabins" element={<Cabins />} />
-            <Route path="/users" element={<Users />} /> 
-            <Route path="/settings" element={<Settings />} />
+            
+            {/* Các route yêu cầu đăng nhập */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings"
+              element={
+                <ProtectedRoute>
+                  <Bookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cabins"
+              element={
+                <ProtectedRoute>
+                  <Cabins />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
           </Route>
+          
           <Route path="/login" element={<Login />} />
         </Routes>
       </BrowserRouter>

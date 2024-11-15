@@ -69,33 +69,38 @@ class AuthController extends Controller
     }
 
     public function updateUserData(Request $request)
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'avatar_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'avatarImage' => 'nullable|string', // Kiểm tra chuỗi base64
+    ]);
 
-        // Cập nhật thông tin người dùng
-        $user->name = $request->name;
-        $user->email = $request->email;
+    // Cập nhật tên
+    $user->name = $request->name;
 
-        // Nếu có ảnh đại diện
-        if ($request->hasFile('avatar_image')) {
-            $avatarPath = $request->file('avatar_image')->store('avatars', 'public');
-            $user->avatar_image = $avatarPath;
-        }
+    // Kiểm tra xem có avatarImage trong request không và xử lý base64
+    if ($request->avatarImage) {
+        $image = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $request->avatarImage));
+        
+        $imageName = uniqid() . '.png';
+        
+        \Storage::disk('public')->put("avatars/{$imageName}", $image);
 
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User data updated successfully',
-            'user' => $user
-        ]);
+        $user->avatarImage = "avatars/{$imageName}";
     }
+
+    $user->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'User data updated successfully',
+        'user' => $user
+    ]);
+}
+
+
 
     public function updatePassword(Request $request)
     {
@@ -115,4 +120,25 @@ class AuthController extends Controller
         ]);
     }
 
+    // Phương thức lấy thông tin người dùng hiện tại
+    public function currentUser(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'success' => true,
+            'user' => $user
+        ]);
+    }
+
+    // Phương thức lấy toàn bộ người dùng
+    public function getAllUsers()
+    {
+        $users = User::all();
+
+        return response()->json([
+            'success' => true,
+            'users' => $users
+        ]);
+    }
 }
