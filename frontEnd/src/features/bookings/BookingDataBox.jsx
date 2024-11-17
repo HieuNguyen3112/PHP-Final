@@ -13,11 +13,9 @@ import { Flag } from "../../ui/Flag";
 import { formatDistanceFromNow, formatCurrency } from "../../utils/helpers";
 
 const StyledBookingDataBox = styled.section`
-  /* Box */
   background-color: var(--color-grey-0);
   border: 1px solid var(--color-grey-100);
   border-radius: var(--border-radius-md);
-
   overflow: hidden;
 `;
 
@@ -68,32 +66,6 @@ const Guest = styled.div`
   }
 `;
 
-const Price = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.6rem 3.2rem;
-  border-radius: var(--border-radius-sm);
-  margin-top: 2.4rem;
-
-  background-color: ${(props) =>
-    props.$isPaid ? "var(--color-green-100)" : "var(--color-yellow-100)"};
-  color: ${(props) =>
-    props.$isPaid ? "var(--color-green-700)" : "var(--color-yellow-700)"};
-
-  & p:last-child {
-    text-transform: uppercase;
-    font-size: 1.4rem;
-    font-weight: 600;
-  }
-
-  svg {
-    height: 2.4rem;
-    width: 2.4rem;
-    color: currentColor !important;
-  }
-`;
-
 const Footer = styled.footer`
   padding: 1.6rem 4rem;
   font-size: 1.2rem;
@@ -101,23 +73,43 @@ const Footer = styled.footer`
   text-align: right;
 `;
 
-// A purely presentational component
-function BookingDataBox({ booking }) {
+const CustomerDetails = styled.div`
+  margin-top: 2rem;
+  padding: 1.6rem 3.2rem;
+  border: 1px solid var(--color-grey-100);
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-grey-50);
+
+  & p {
+    margin: 0.8rem 0;
+    font-size: 1.4rem;
+  }
+`;
+
+function isValidDate(date) {
+  return date && !isNaN(Date.parse(date));
+}
+
+function BookingDataBox({ booking, customer }) {
   const {
     created_at,
-    startDate,
-    endDate,
-    numNights,
-    numGuests,
-    cabinPrice,
-    extrasPrice,
-    totalPrice,
-    hasBreakfast,
-    observations,
-    isPaid,
-    guest: { fullName: guestName, email, country, countryFlag, nationalID },
-    cabins: { name: cabinName },
+    start_date: startDate,
+    end_date: endDate,
+    nights: numNights = 0,
+    guest_name: guestName = "Unknown Guest",
+    guest_email: email = "No Email Provided",
+    cabin_name: cabinName = "Unknown Cabin",
+    amount: totalPrice = 0,
   } = booking;
+
+  const {
+    name: customerName = "N/A",
+    email: customerEmail = "N/A",
+    phone_number: phoneNumber = "N/A",
+    address = "N/A",
+    national_id: nationalID = "N/A",
+    country = "N/A",
+  } = customer || {};
 
   return (
     <StyledBookingDataBox>
@@ -130,55 +122,51 @@ function BookingDataBox({ booking }) {
         </div>
 
         <p>
-          {format(new Date(startDate), "EEE, MMM dd yyyy")} (
-          {isToday(new Date(startDate))
+          {isValidDate(startDate)
+            ? format(new Date(startDate), "EEE, MMM dd yyyy")
+            : "Start date unknown"}{" "}
+          (
+          {isValidDate(startDate) && isToday(new Date(startDate))
             ? "Today"
-            : formatDistanceFromNow(startDate)}
-          ) &mdash; {format(new Date(endDate), "EEE, MMM dd yyyy")}
+            : isValidDate(startDate)
+            ? formatDistanceFromNow(startDate)
+            : ""}
+          ){" "}
+          &mdash;{" "}
+          {isValidDate(endDate)
+            ? format(new Date(endDate), "EEE, MMM dd yyyy")
+            : "End date unknown"}
         </p>
       </Header>
 
       <Section>
         <Guest>
-          {countryFlag && <Flag src={countryFlag} alt={`Flag of ${country}`} />}
-          <p>
-            {guestName} {numGuests > 1 ? `+ ${numGuests - 1} guests` : ""}
-          </p>
+          <p>{guestName}</p>
           <span>&bull;</span>
           <p>{email}</p>
-          <span>&bull;</span>
-          <p>National ID {nationalID}</p>
         </Guest>
 
-        {observations && (
-          <DataItem
-            icon={<HiOutlineChatBubbleBottomCenterText />}
-            label="Observations"
-          >
-            {observations}
-          </DataItem>
-        )}
+        <CustomerDetails>
+          <h3>Customer Details</h3>
+          <p><strong>Name:</strong> {customerName}</p>
+          <p><strong>Email:</strong> {customerEmail}</p>
+          <p><strong>Phone:</strong> {phoneNumber}</p>
+          <p><strong>Address:</strong> {address}</p>
+          <p><strong>National ID:</strong> {nationalID}</p>
+          <p><strong>Country:</strong> {country}</p>
+        </CustomerDetails>
 
-        <DataItem icon={<HiOutlineCheckCircle />} label="Breakfast included?">
-          {hasBreakfast ? "Yes" : "No"}
+        <DataItem icon={<HiOutlineCurrencyDollar />} label="Total Price">
+          {formatCurrency(totalPrice)}
         </DataItem>
-
-        <Price $isPaid={isPaid}>
-          <DataItem icon={<HiOutlineCurrencyDollar />} label={`Total price`}>
-            {formatCurrency(totalPrice)}
-
-            {hasBreakfast &&
-              ` (${formatCurrency(cabinPrice)} cabin + ${formatCurrency(
-                extrasPrice
-              )} breakfast)`}
-          </DataItem>
-
-          <p>{isPaid ? "Paid" : "Will pay at property"}</p>
-        </Price>
       </Section>
 
       <Footer>
-        <p>Booked {format(new Date(created_at), "EEE, MMM dd yyyy, p")}</p>
+        <p>
+          {isValidDate(created_at)
+            ? `Booked on ${format(new Date(created_at), "EEE, MMM dd yyyy, p")}`
+            : "Booking date unknown"}
+        </p>
       </Footer>
     </StyledBookingDataBox>
   );

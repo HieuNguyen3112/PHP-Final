@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
+import Booking from "./pages/Booking"; // Import lại từ Booking.jsx
 import Account from "./pages/Account";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -9,7 +10,7 @@ import Cabins from "./pages/Cabins";
 import { DarkModeProvider } from "./context/DarkModeContext";
 import GlobalStyles from "./styles/GlobalSyles";
 import AppLayout from "./ui/AppLayout";
-import ProtectedRoute from "./api/ProtectedRoute"; 
+import ProtectedRoute from "./api/ProtectedRoute";
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
           {/* Trang chính có AppLayout */}
           <Route element={<AppLayout />}>
             <Route path="/" element={<Navigate to="/dashboard" />} />
-            
+
             {/* Các route yêu cầu đăng nhập */}
             <Route
               path="/dashboard"
@@ -36,6 +37,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Bookings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bookings/:id" // Route chi tiết booking
+              element={
+                <ProtectedRoute>
+                  <Booking />
                 </ProtectedRoute>
               }
             />
@@ -72,7 +81,7 @@ function App() {
               }
             />
           </Route>
-          
+
           <Route path="/login" element={<Login />} />
         </Routes>
       </BrowserRouter>

@@ -1,9 +1,6 @@
-import { useState } from "react";
 import styled from "styled-components";
 import { format, isToday } from "date-fns";
-
 import { useNavigate } from "react-router-dom";
-
 import Tag from "../../ui/Tag";
 import Table from "../../ui/Table";
 import {
@@ -12,13 +9,13 @@ import {
   HiEye,
   HiTrash,
 } from "react-icons/hi2";
-
 import Menus from "../../ui/Menus";
 import Modal from "../../ui/Modal";
 import ConfirmDelete from "../../ui/ConfirmDelete";
-
 import { formatCurrency } from "../../utils/helpers";
 import { formatDistanceFromNow } from "../../utils/helpers";
+import useCheckoutBooking from "../../api/useCheckout";
+import useDeleteBooking from "../../api/useDeleteBookings";
 
 const Cabin = styled.div`
   font-size: 1.6rem;
@@ -53,19 +50,17 @@ function BookingRow({
     created_at,
     startDate,
     endDate,
-    numNights,
-    numGuests,
-    totalPrice,
-    status,
-    guest: { fullName: guestName, email },
-    cabins: { name: cabinName },
+    numNights = 1,
+    numGuests = 1,
+    totalPrice = 0,
+    status = "unconfirmed",
+    guest = {},
+    cabins = {},
   },
 }) {
   const navigate = useNavigate();
-
-  // State để mô phỏng quá trình `checkout` và `deleteBooking`
-  const [isCheckingout, setIsCheckingout] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { checkoutBooking, isCheckingOut, checkoutError } = useCheckoutBooking();
+  const { deleteBooking, isDeleting, deleteError } = useDeleteBooking();
 
   const statusToTagName = {
     unconfirmed: "blue",
@@ -73,31 +68,23 @@ function BookingRow({
     "checked-out": "silver",
   };
 
-  // Hàm tĩnh mô phỏng `checkout`
-  function handleCheckout() {
-    setIsCheckingout(true);
-    setTimeout(() => {
-      alert(`Checked out booking #${bookingId}`);
-      setIsCheckingout(false);
-    }, 1500);
-  }
+  const handleCheckout = async () => {
+    await checkoutBooking(bookingId);
+    if (checkoutError) alert("Lỗi khi checkout booking");
+  };
 
-  // Hàm tĩnh mô phỏng `deleteBooking`
-  function handleDelete() {
-    setIsDeleting(true);
-    setTimeout(() => {
-      alert(`Deleted booking #${bookingId}`);
-      setIsDeleting(false);
-    }, 1500);
-  }
+  const handleDelete = async () => {
+    await deleteBooking(bookingId);
+    if (deleteError) alert("Lỗi khi xóa booking");
+  };
 
   return (
     <Table.Row>
-      <Cabin>{cabinName}</Cabin>
+      <Cabin>{cabins?.name || "Unknown Cabin"}</Cabin>
 
       <Stacked>
-        <span>{guestName}</span>
-        <span>{email}</span>
+        <span>{guest?.fullName || "Unknown Guest"}</span>
+        <span>{guest?.email || "No Email Provided"}</span>
       </Stacked>
 
       <Stacked>
@@ -123,7 +110,7 @@ function BookingRow({
           <Menus.List id={bookingId}>
             <Menus.Button
               icon={<HiEye />}
-              onClick={(_) => navigate(`/bookings/${bookingId}`)}
+              onClick={() => navigate(`/bookings/${bookingId}`)}
             >
               See Details
             </Menus.Button>
@@ -141,9 +128,9 @@ function BookingRow({
               <Menus.Button
                 icon={<HiArrowUpOnSquare />}
                 onClick={handleCheckout}
-                disabled={isCheckingout}
+                disabled={isCheckingOut}
               >
-                {isCheckingout ? "Checking out..." : "Check out"}
+                {isCheckingOut ? "Checking out..." : "Check out"}
               </Menus.Button>
             )}
 

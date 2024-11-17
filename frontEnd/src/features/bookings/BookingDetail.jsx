@@ -1,4 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { HiArrowUpOnSquare, HiArrowDownOnSquare } from "react-icons/hi2";
+import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import BookingDataBox from "./BookingDataBox";
 import Row from "../../ui/Row";
@@ -8,12 +10,13 @@ import ButtonGroup from "../../ui/ButtonGroup";
 import Button from "../../ui/Button";
 import ButtonText from "../../ui/ButtonText";
 import { useMoveBack } from "../../hooks/useMoveBack";
-import { useNavigate } from "react-router-dom";
-import { HiArrowUpOnSquare } from "react-icons/hi2";
 import Spinner from "../../ui/Spinner";
 import Modal from "../../ui/Modal";
 import ConfirmDelete from "../../ui/ConfirmDelete";
 import Empty from "../../ui/Empty";
+import useDetailBooking from "../../api/useDetailBookings";
+import useCheckIn from "../../api/useCheckin";
+import useCheckout from "../../api/useCheckout"; // Import thêm useCheckout
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -22,29 +25,32 @@ const HeadingGroup = styled.div`
 `;
 
 function BookingDetail() {
+  const { id } = useParams();
+  const { booking, loading, error, refetch } = useDetailBooking(id); // Thêm `refetch` từ useDetailBooking
   const moveBack = useMoveBack();
   const navigate = useNavigate();
 
-  const [isCheckingout, setIsCheckingout] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { checkInBooking, isCheckingIn } = useCheckIn(); // Hook check-in
+  const { checkoutBooking, isCheckingOut } = useCheckout(); // Hook checkout
 
-  // Dữ liệu tĩnh giả lập cho `booking`
-  const booking = {
-    id: 1,
-    status: "checked-in",
-    guest: {
-      fullName: "John Doe",
-      country: "USA",
-    },
-    cabin: "Cabin A",
-    numNights: 3,
-  };
+  if (loading) return <Spinner />;
+  if (error) return <Empty resourceName="booking" />;
+  if (!booking) {
+    return <Empty resourceName="booking or required data" />;
+  }
 
-  if (isLoading) return <Spinner />;
-  if (!booking) return <Empty resourceName="booking" />;
-
-  const { status, id: bookingId } = booking;
+  const {
+    id: bookingId,
+    cabin_name,
+    guest_name,
+    guest_email,
+    start_date,
+    end_date,
+    nights,
+    status,
+    amount,
+    customer,
+  } = booking;
 
   const statusToTagName = {
     unconfirmed: "blue",
@@ -52,23 +58,36 @@ function BookingDetail() {
     "checked-out": "silver",
   };
 
-  // Hàm tĩnh mô phỏng `checkout`
-  function handleCheckout() {
-    setIsCheckingout(true);
-    setTimeout(() => {
-      alert(`Checked out booking #${bookingId}`);
-      setIsCheckingout(false);
-    }, 1500);
+  // Hàm xử lý `checkin`
+  async function handleCheckIn() {
+    try {
+      await checkInBooking(bookingId);
+      alert(`Checked in booking #${bookingId}`);
+      refetch(); // Gọi lại API để cập nhật trạng thái
+    } catch (error) {
+      console.error("Error checking in booking:", error);
+    }
   }
 
-  // Hàm tĩnh mô phỏng `deleteBooking`
-  function handleDelete() {
-    setIsDeleting(true);
-    setTimeout(() => {
+  // Hàm xử lý `checkout`
+  async function handleCheckout() {
+    try {
+      await checkoutBooking(bookingId);
+      alert(`Checked out booking #${bookingId}`);
+      refetch(); // Gọi lại API để cập nhật trạng thái
+    } catch (error) {
+      console.error("Error checking out booking:", error);
+    }
+  }
+
+  // Hàm xử lý `deleteBooking`
+  async function handleDelete() {
+    try {
       alert(`Deleted booking #${bookingId}`);
-      setIsDeleting(false);
       navigate(-1);
-    }, 1500);
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+    }
   }
 
   return (
@@ -81,12 +100,28 @@ function BookingDetail() {
         <ButtonText onClick={moveBack}>&larr; Back</ButtonText>
       </Row>
 
-      <BookingDataBox booking={booking} />
+      {/* Gửi dữ liệu booking và customer vào BookingDataBox */}
+      <BookingDataBox
+        booking={{
+          cabin_name,
+          guest_name,
+          guest_email,
+          start_date,
+          end_date,
+          nights,
+          amount,
+        }}
+        customer={customer}
+      />
 
       <ButtonGroup>
         {status === "unconfirmed" && (
-          <Button onClick={() => navigate(`/checkin/${bookingId}`)}>
-            Check in
+          <Button
+            icon={<HiArrowDownOnSquare />}
+            onClick={handleCheckIn}
+            disabled={isCheckingIn}
+          >
+            {isCheckingIn ? "Checking in..." : "Check in"}
           </Button>
         )}
 
@@ -94,9 +129,9 @@ function BookingDetail() {
           <Button
             icon={<HiArrowUpOnSquare />}
             onClick={handleCheckout}
-            disabled={isCheckingout}
+            disabled={isCheckingOut}
           >
-            {isCheckingout ? "Checking out..." : "Check out"}
+            {isCheckingOut ? "Checking out..." : "Check out"}
           </Button>
         )}
 
@@ -108,7 +143,6 @@ function BookingDetail() {
           <Modal.Window name="delete">
             <ConfirmDelete
               resourceName="booking"
-              disabled={isDeleting}
               onConfirm={handleDelete}
             />
           </Modal.Window>

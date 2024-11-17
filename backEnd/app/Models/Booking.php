@@ -27,8 +27,14 @@ class Booking extends Model
     // Thiết lập mối quan hệ với model Cabin
     public function cabin()
     {
-        return $this->belongsTo(Cabin::class);
+        return $this->belongsTo(Cabin::class, 'cabin_id');
     }
+
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
+    }
+
 
     // Các hằng số cho trạng thái booking
     const STATUS_UNCONFIRMED = 'unconfirmed';

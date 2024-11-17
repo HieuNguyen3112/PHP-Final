@@ -40,6 +40,10 @@ Route::middleware('auth:sanctum')->get('/all-users', [AuthController::class, 'ge
 Route::post('/bookings/{id}/checkin', [BookingController::class, 'checkIn'])->name('bookings.checkin');
 Route::post('/bookings/{id}/confirm-payment', [BookingController::class, 'confirmPayment'])->name('bookings.confirmPayment');
 Route::post('/bookings/{id}/checkout', [BookingController::class, 'checkOut'])->name('bookings.checkout');
+Route::get('/bookings', [BookingController::class, 'getAllBookings']);
+Route::delete('/bookings/{id}', [BookingController::class, 'deleteBooking']);
+Route::get('/bookings/{id}/details', [BookingController::class, 'detailBooking'])->name('bookings.details');
+
 
 // Cabin controller router
 Route::post('/cabins/{id}/duplicate', [CabinController::class, 'duplicate'])->name('cabins.duplicate');
