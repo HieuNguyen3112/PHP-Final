@@ -1,6 +1,6 @@
-# 🌲 The Wild Oasis - Dự án PTTKHTTT
+# 🌲 The Wild Oasis - Dự án quản lí khách sạn
 
-Đây là dự án cuối kỳ của môn Phân tích thiết kế hệ thống thông tin (PTTKHTTT), một hệ thống quản lý khách sạn trực tuyến có tên **The Wild Oasis**. Trang web này cho phép người dùng quản lý các cabin, đặt phòng, thiết lập tài khoản, và các tính năng khác cần thiết cho hệ thống đặt phòng khách sạn. Dự án được xây dựng với **Laravel** ở phần backend và **ReactJS** ở phần frontend.
+Đây là dự án cuối kỳ của môn lập trình PHP, một hệ thống quản lý khách sạn trực tuyến có tên **The Wild Oasis**. Trang web này cho phép người dùng quản lý các cabin, đặt phòng, thiết lập tài khoản, và các tính năng khác cần thiết cho hệ thống đặt phòng khách sạn. Dự án được xây dựng với **Laravel** ở phần backend và **ReactJS** ở phần frontend.
 
 ## 📑 Mục lục
 
