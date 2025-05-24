@@ -4,6 +4,10 @@ import Stats from "./Stats";
 import SalesChart from "./SalesChart";
 import DurationChart from "./DurationChart";
 import TodayActivity from "../check-in-out/TodayActivity";
+import { useMemo } from 'react';
+import { subDays, isAfter, parseISO, differenceInDays } from 'date-fns';
+import useGetAllBooking from "../../api/useBookings";
+import useGetCabins from "../../api/useGetCabinsSmall";
 
 const StyledDashboardLayout = styled.div`
   display: grid;
@@ -12,42 +16,59 @@ const StyledDashboardLayout = styled.div`
   gap: 2.4rem;
 `;
 
-function DashboardLayout() {
-  // Dữ liệu tĩnh thay thế cho `useRecentBookings`, `useRecentStays`, và `useCabins`
-  const bookings = [
-    { id: 1, amount: 250 },
-    { id: 2, amount: 400 },
-    { id: 3, amount: 150 },
-  ];
+function DashboardLayout({ numDays }) {
+  // Fetch all bookings and cabins
+  const { bookings, loading: bookingsLoading } = useGetAllBooking();
+  const { cabins, isLoading: cabinsLoading } = useGetCabins();
 
-  const confirmedStays = [
-    { id: 1, nights: 3 },
-    { id: 2, nights: 5 },
-  ];
+  // Calculate the start date for filtering (last X days)
+  const today = new Date();
+  const startDate = subDays(today, numDays);
 
-  const cabins = [
-    { id: 1, name: "Cabin A" },
-    { id: 2, name: "Cabin B" },
-    { id: 3, name: "Cabin C" },
-  ];
+  // Process data based on the selected time period
+  const data = useMemo(() => {
+    // Filter bookings for the selected period
+    const filteredBookings = bookings.filter(booking => {
+      if (!booking.startDate) return false;
+      const bookingDate = parseISO(booking.startDate);
+      return isAfter(bookingDate, startDate) || differenceInDays(bookingDate, startDate) === 0;
+    });
 
-  const numDays = 7; // Giả sử số ngày gần đây
+    // Get only checked-in and checked-out stays
+    const confirmedStays = filteredBookings.filter(
+      booking => booking.status === "checked_in" || booking.status === "checked_out"
+    );
 
-  const isLoading = false; // Giả lập không tải dữ liệu
+    // Calculate today's activities (arrivals and departures)
+    const todayActivities = bookings.filter(booking => {
+      if (!booking.startDate) return false;
+      const bookingDate = parseISO(booking.startDate);
+      return differenceInDays(bookingDate, today) === 0;
+    });
+
+    return {
+      bookings: filteredBookings,
+      confirmedStays,
+      todayActivities,
+      cabinCount: cabins.length || 0
+    };
+  }, [bookings, cabins, startDate, today]);
+
+  const isLoading = bookingsLoading || cabinsLoading;
 
   if (isLoading) return <Spinner />;
 
   return (
     <StyledDashboardLayout>
       <Stats
-        bookings={bookings}
-        confirmedStays={confirmedStays}
+        bookings={data.bookings}
+        confirmedStays={data.confirmedStays}
         numDays={numDays}
-        cabinCount={cabins.length}
+        cabinCount={data.cabinCount}
       />
-      <TodayActivity />
-      <DurationChart confirmedStays={confirmedStays} />
-      <SalesChart bookings={bookings} numDays={numDays} />
+      <TodayActivity activities={data.todayActivities} />
+      <DurationChart confirmedStays={data.confirmedStays} />
+      <SalesChart bookings={data.bookings} numDays={numDays} />
     </StyledDashboardLayout>
   );
 }

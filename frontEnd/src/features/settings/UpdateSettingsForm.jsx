@@ -1,40 +1,49 @@
+import { useEffect } from "react";
 import Form from "../../ui/Form";
 import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
 import Spinner from "../../ui/Spinner";
-import { useState } from "react";
+import useGetSettings from "../../api/useGetSettings";
+import useUpdateSettings from "../../api/useUpdateSettings";
+import { toast } from "react-hot-toast";
 
 function UpdateSettingsForm() {
-  // Dữ liệu tĩnh thay thế cho `useSettings`
-  const settings = {
-    minBookingLength: 2,
-    maxBookingLength: 14,
-    maxGuestsPerBooking: 6,
-    breakfastPrice: 15,
-  };
+  // Use the hooks to get and update settings
+  const { settings, isLoading, error } = useGetSettings();
+  const { 
+    updateSetting, 
+    isUpdating, 
+    updateError, 
+    updateSuccess 
+  } = useUpdateSettings();
 
-  // State để mô phỏng việc cập nhật
-  const [isUpdating, setIsUpdating] = useState(false);
+  // Show success or error notifications
+  useEffect(() => {
+    if (updateSuccess) toast.success("Setting updated successfully");
+    if (updateError) toast.error(updateError);
+  }, [updateSuccess, updateError]);
 
-  // Mô phỏng hàm `updateSetting`
-  function updateSetting(updatedField) {
-    setIsUpdating(true);
-    setTimeout(() => {
-      console.log("Updated setting:", updatedField);
-      setIsUpdating(false);
-    }, 1000); // Mô phỏng thời gian cập nhật
-  }
+  // Show error if fetching settings fails
+  useEffect(() => {
+    if (error) toast.error(error);
+  }, [error]);
 
-  function handleUpdate(e, field) {
+  // Handle updating a setting when the input loses focus
+  async function handleUpdate(e, field) {
     const { value } = e.target;
     if (!value) return;
-
-    updateSetting({ [field]: value });
+    
+    const numericValue = Number(value);
+    
+    try {
+      await updateSetting({ [field]: numericValue });
+    } catch (err) {
+      // Error is already handled in the hook
+    }
   }
 
-  // Giả lập isLoading (có thể bỏ nếu không cần thiết)
-  const isLoading = false;
   if (isLoading) return <Spinner />;
+  if (!settings) return <p>No settings found.</p>;
 
   return (
     <Form>
@@ -45,6 +54,7 @@ function UpdateSettingsForm() {
           defaultValue={settings.minBookingLength}
           disabled={isUpdating}
           onBlur={(e) => handleUpdate(e, "minBookingLength")}
+          min="1"
         />
       </FormRow>
 
@@ -55,6 +65,7 @@ function UpdateSettingsForm() {
           defaultValue={settings.maxBookingLength}
           disabled={isUpdating}
           onBlur={(e) => handleUpdate(e, "maxBookingLength")}
+          min="1"
         />
       </FormRow>
 
@@ -65,6 +76,7 @@ function UpdateSettingsForm() {
           defaultValue={settings.maxGuestsPerBooking}
           disabled={isUpdating}
           onBlur={(e) => handleUpdate(e, "maxGuestsPerBooking")}
+          min="1"
         />
       </FormRow>
 
@@ -75,6 +87,8 @@ function UpdateSettingsForm() {
           defaultValue={settings.breakfastPrice}
           disabled={isUpdating}
           onBlur={(e) => handleUpdate(e, "breakfastPrice")}
+          min="0"
+          step="0.01"
         />
       </FormRow>
     </Form>

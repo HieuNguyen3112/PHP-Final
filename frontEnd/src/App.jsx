@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
 import Booking from "./pages/Booking"; // Import lại từ Booking.jsx
+import Checkin from "./pages/Checkin";
 import Account from "./pages/Account";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
@@ -11,13 +12,17 @@ import { DarkModeProvider } from "./context/DarkModeContext";
 import GlobalStyles from "./styles/GlobalSyles";
 import AppLayout from "./ui/AppLayout";
 import ProtectedRoute from "./api/ProtectedRoute";
+import { CabinProvider } from './context/CabinContext';
 
 function App() {
   return (
     <DarkModeProvider>
+      
+      
       <GlobalStyles />
 
       <BrowserRouter>
+      <CabinProvider>
         <Routes>
           {/* Trang chính có AppLayout */}
           <Route element={<AppLayout />}>
@@ -41,10 +46,18 @@ function App() {
               }
             />
             <Route
-              path="/bookings/:id" // Route chi tiết booking
+              path="/bookings/:id" 
               element={
                 <ProtectedRoute>
                   <Booking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkin/:id" 
+              element={
+                <ProtectedRoute>
+                  <Checkin />
                 </ProtectedRoute>
               }
             />
@@ -56,14 +69,17 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/cabins"
-              element={
-                <ProtectedRoute>
-                  <Cabins />
-                </ProtectedRoute>
-              }
-            />
+              
+          <Route
+                path="/cabins"
+                element={
+                  <ProtectedRoute>
+                    <Cabins />
+                  </ProtectedRoute>
+                }
+              />
+          
+            
             <Route
               path="/users"
               element={
@@ -84,7 +100,9 @@ function App() {
 
           <Route path="/login" element={<Login />} />
         </Routes>
+        </CabinProvider>
       </BrowserRouter>
+      
     </DarkModeProvider>
   );
 }

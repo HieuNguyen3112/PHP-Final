@@ -7,14 +7,12 @@ use App\Models\Setting;
 
 class SettingsController extends Controller
 {
-    // Hiển thị các thông số
     public function index()
     {
         $settings = Setting::first();
         return response()->json($settings);
     }
 
-    // Cập nhật các thông số
     public function update(Request $request)
     {
         $request->validate([

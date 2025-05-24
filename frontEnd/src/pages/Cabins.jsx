@@ -3,13 +3,19 @@ import Heading from "../ui/Heading";
 import Row from "../ui/Row";
 import AddCabin from "../features/cabins/AddCabin";
 import CabinTableOperations from "../features/cabins/CabinTableOperations";
+import { useCabinContext } from "../context/CabinContext";
 
 function Cabins() {
+  const { refreshCabins } = useCabinContext();
+  
   return (
     <>
       <Row type="horizontal">
         <Heading as="h1">All cabins</Heading>
-        <CabinTableOperations />
+        <div>
+         
+          <CabinTableOperations />
+        </div>
       </Row>
 
       <Row>

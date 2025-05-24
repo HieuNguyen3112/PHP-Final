@@ -38,6 +38,13 @@ class CabinsTableSeeder extends Seeder
                 'price' => 500.00,
                 'discount' => 50.00,
             ],
+            [
+                'id' => 5,
+                'name' => 'Cabin 005',
+                'capacity' => 4,
+                'price' => 530.00,
+                'discount' => 53.00,
+            ],
         ]);
     }
 }

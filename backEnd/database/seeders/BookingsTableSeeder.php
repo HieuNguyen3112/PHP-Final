@@ -18,7 +18,7 @@ class BookingsTableSeeder extends Seeder
             'start_date' => Carbon::now()->addDays(5),
             'end_date' => Carbon::now()->addDays(10),
             'nights' => 5,
-            'status' => 'checked-in',
+            'status' => 'checked_in',
             'amount' => 2500.00,
         ]);
 
@@ -29,7 +29,7 @@ class BookingsTableSeeder extends Seeder
             'start_date' => Carbon::now()->addDays(15),
             'end_date' => Carbon::now()->addDays(20),
             'nights' => 5,
-            'status' => 'checked-out',
+            'status' => 'checked_out',
             'amount' => 3000.00,
         ]);
 
@@ -51,7 +51,7 @@ class BookingsTableSeeder extends Seeder
             'start_date' => Carbon::now()->addDays(20),
             'end_date' => Carbon::now()->addDays(25),
             'nights' => 5,
-            'status' => 'checked-in',
+            'status' => 'checked_in',
             'amount' => 3500.00,
         ]);
     }

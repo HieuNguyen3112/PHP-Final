@@ -4,20 +4,25 @@ import { HiOutlineBanknotes, HiOutlineCalendarDays } from "react-icons/hi2";
 import { formatCurrency } from "../../utils/helpers";
 
 function Stats({ bookings, confirmedStays, numDays, cabinCount }) {
+  // Total number of bookings in the selected period
   const numBookings = bookings.length;
 
-  const sales = bookings.reduce((acc, cur) => acc + cur.totalPrice, 0);
+  // Total sales from confirmed stays only (checked-in or checked-out)
+  const sales = confirmedStays.reduce((acc, cur) => acc + Number(cur.totalPrice), 0);
 
-  const checkins = confirmedStays.length;
+  // Number of check-ins (guests with checked-in status)
+  const checkins =  confirmedStays.filter(confirmedStays => confirmedStays.status === "checked_in").length;
 
-  const occupation =
-    confirmedStays.reduce((acc, cur) => acc + cur.numNights, 0) /
-    (numDays * cabinCount);
+  // Calculate occupancy rate
+  // Total nights from confirmed stays / (total available nights in the period)
+  const totalNights = confirmedStays.reduce((acc, cur) => acc + Number(cur.numNights), 0);
+  const availableNights = numDays * cabinCount;
+  const occupation = availableNights > 0 ? totalNights / availableNights : 0;
 
   return (
     <>
       <Stat
-        title="bookings"
+        title="Bookings"
         color="blue"
         icon={<HiOutlineBriefcase />}
         value={numBookings}

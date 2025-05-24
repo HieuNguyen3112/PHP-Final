@@ -487,20 +487,32 @@ class Connection implements ConnectionInterface
      */
     public function statement($query, $bindings = [])
     {
+        // Debug: Print the query and bindings
+        // echo "Query: " . $query . PHP_EOL;
+        // echo "Bindings: " . json_encode($bindings) . PHP_EOL;
+        
         return $this->run($query, $bindings, function ($query, $bindings) {
             if ($this->pretending()) {
                 return true;
             }
-
+    
             $statement = $this->getPdo()->prepare($query);
-
+    
+            // Optional: Print the prepared query with values
+            $boundQuery = $query;
+            foreach ($this->prepareBindings($bindings) as $key => $value) {
+                $boundQuery = preg_replace('/\?/', is_string($value) ? "'".$value."'" : $value, $boundQuery, 1);
+            }
+            // echo "Prepared Query: " . $boundQuery . PHP_EOL;
+    
             $this->bindValues($statement, $this->prepareBindings($bindings));
-
+    
             $this->recordsHaveBeenModified();
-
+    
             return $statement->execute();
         });
     }
+    
 
     /**
      * Run an SQL statement and get the number of rows affected.

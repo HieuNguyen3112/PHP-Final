@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const useDetailBooking = (id) => {
@@ -6,45 +6,61 @@ const useDetailBooking = (id) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchBookingDetails = async () => {
-      setLoading(true);
-      setError(null);
+  // Use useCallback to memoize the fetchBookingDetails function
+  const fetchBookingDetails = useCallback(async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    setError(null);
 
-      try {
-        // Lấy cookie CSRF trước khi gọi API
-        await axios.get("http://127.0.0.1:8000/sanctum/csrf-cookie");
+    try {
+      // Get CSRF cookie before calling API
+      await axios.get("http://127.0.0.1:8000/sanctum/csrf-cookie", {
+        withCredentials: true
+      });
 
-        // Gọi API lấy thông tin chi tiết của booking
-        const response = await axios.get(
-          `http://127.0.0.1:8000/api/bookings/${id}/details`,
-          { withCredentials: true }
-        );
+      // Call API to get booking details
+      const response = await axios.get(
+        `http://127.0.0.1:8000/api/bookings/${id}/details`,
+        { withCredentials: true }
+      );
 
-        // Kiểm tra dữ liệu trả về
-        const bookingData = response.data.booking;
-        if (!bookingData) {
-          throw new Error("Booking data is missing");
-        }
-
-        // Cập nhật state với thông tin booking
-        setBooking(bookingData);
-
-        // Log thông tin booking để kiểm tra
-        console.log("Booking details:", bookingData);
-      } catch (err) {
-        console.error("Error fetching booking details:", err);
-        setError(err.message || "Error fetching booking details");
-      } finally {
-        setLoading(false);
+      // Check if response is successful
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Failed to fetch booking details");
       }
-    };
 
-    // Gọi hàm fetch dữ liệu
-    fetchBookingDetails();
+      // Check if booking data exists
+      const bookingData = response.data.booking;
+      if (!bookingData) {
+        throw new Error("Booking data is missing");
+      }
+
+      // Update state with booking information
+      setBooking(bookingData);
+
+      // Log booking information for debugging
+      console.log("Booking details fetched successfully:", bookingData);
+    } catch (err) {
+      console.error("Error fetching booking details:", err);
+      setError(err.message || "Error fetching booking details");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
-  return { booking, loading, error };
+  // Initial fetch on component mount or id change
+  useEffect(() => {
+    fetchBookingDetails();
+  }, [fetchBookingDetails]);
+
+  // Return the refetch function along with state
+  return { 
+    booking, 
+    loading, 
+    error, 
+    refetch: fetchBookingDetails 
+  };
 };
 
 export default useDetailBooking;

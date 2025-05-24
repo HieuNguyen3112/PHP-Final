@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Customer extends Model
 {
 
+    protected $fillable = [
+        'booking_id',
+        'name',
+        'email',
+        'phone_number',
+        'address',
+        'national_id',
+        'country'
+    ];
     public function booking()
     {
         return $this->belongsTo(Booking::class);

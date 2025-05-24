@@ -12,6 +12,45 @@ import { Flag } from "../../ui/Flag";
 
 import { formatDistanceFromNow, formatCurrency } from "../../utils/helpers";
 
+const safeFormatDistance = (date) => {
+  if (!date) return "date unknown";
+  
+  try {
+    // If it's already a Date object
+    if (date instanceof Date) {
+      return formatDistanceFromNow(date.toISOString());
+    }
+    
+    // If it's a string
+    if (typeof date === 'string') {
+      return formatDistanceFromNow(date);
+    }
+    
+    // If it's a number (timestamp)
+    if (typeof date === 'number') {
+      return formatDistanceFromNow(new Date(date).toISOString());
+    }
+    
+    // If it's something else, try to convert it
+    return formatDistanceFromNow(new Date(date).toISOString());
+  } catch (error) {
+    console.error("Date formatting error:", error, date);
+    return "date unknown";
+  }
+};
+
+// Safe date formatting function
+const safeFormat = (date, formatString) => {
+  if (!date) return "unknown date";
+  
+  try {
+    return format(new Date(date), formatString);
+  } catch (error) {
+    console.error("Date formatting error:", error, date);
+    return "unknown date";
+  }
+};
+
 const StyledBookingDataBox = styled.section`
   background-color: var(--color-grey-0);
   border: 1px solid var(--color-grey-100);
@@ -86,30 +125,64 @@ const CustomerDetails = styled.div`
   }
 `;
 
+const StatusBadge = styled.span`
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  border-radius: 100px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  
+  /* Status-specific styles */
+  background-color: ${props => {
+    if (props.status === 'checked_in') return 'var(--color-green-100)';
+    if (props.status === 'checked_out') return 'var(--color-grey-100)';
+    if (props.status === 'unconfirmed') return 'var(--color-yellow-100)';
+    return 'var(--color-blue-100)'; // default
+  }};
+  
+  color: ${props => {
+    if (props.status === 'checked_in') return 'var(--color-green-700)';
+    if (props.status === 'checked_out') return 'var(--color-grey-700)';
+    if (props.status === 'unconfirmed') return 'var(--color-yellow-700)';
+    return 'var(--color-blue-700)'; // default
+  }};
+`;
+
 function isValidDate(date) {
   return date && !isNaN(Date.parse(date));
 }
 
-function BookingDataBox({ booking, customer }) {
+function BookingDataBox({ booking }) {
+  // Extract booking data with defaults
   const {
+    id,
     created_at,
-    start_date: startDate,
-    end_date: endDate,
-    nights: numNights = 0,
-    guest_name: guestName = "Unknown Guest",
-    guest_email: email = "No Email Provided",
-    cabin_name: cabinName = "Unknown Cabin",
-    amount: totalPrice = 0,
+    startDate,
+    endDate,
+    numNights,
+    status,
+    totalPrice,
+    cabinName,
+    guest,
   } = booking;
 
+  // Extract guest data with defaults
+  const { fullname = "Unknown Guest", email = "No Email Provided" } = guest || {};
+
+  // Extract customer data (from either booking.customer or passed directly)
+  const customer = booking.customer || booking.guest || {};
   const {
-    name: customerName = "N/A",
-    email: customerEmail = "N/A",
-    phone_number: phoneNumber = "N/A",
-    address = "N/A",
-    national_id: nationalID = "N/A",
+    phone = customer.phone_number,
+    nationalID = customer.national_id,
     country = "N/A",
-  } = customer || {};
+  } = customer;
+  
+
+  // Format the created_at date
+  const formattedCreatedAt = created_at 
+    ? format(new Date(created_at), "EEE, MMM dd yyyy, p")
+    : format(new Date(), "EEE, MMM dd yyyy, p");
 
   return (
     <StyledBookingDataBox>
@@ -122,36 +195,36 @@ function BookingDataBox({ booking, customer }) {
         </div>
 
         <p>
-          {isValidDate(startDate)
-            ? format(new Date(startDate), "EEE, MMM dd yyyy")
-            : "Start date unknown"}{" "}
-          (
-          {isValidDate(startDate) && isToday(new Date(startDate))
-            ? "Today"
-            : isValidDate(startDate)
-            ? formatDistanceFromNow(startDate)
-            : ""}
-          ){" "}
-          &mdash;{" "}
-          {isValidDate(endDate)
-            ? format(new Date(endDate), "EEE, MMM dd yyyy")
-            : "End date unknown"}
-        </p>
+  {isValidDate(startDate) ? (
+    <>
+      {safeFormat(startDate, "EEE, MMM dd yyyy")}
+      {" "}
+      {isToday(new Date(startDate)) 
+        ? "(Today)" 
+        : `(${safeFormatDistance(startDate)})`}
+      {" "}&mdash;{" "}
+      {safeFormat(endDate, "EEE, MMM dd yyyy")}
+    </>
+  ) : (
+    "Date information unavailable"
+  )}
+</p>
       </Header>
 
       <Section>
         <Guest>
-          <p>{guestName}</p>
+          <p>{fullname}</p>
           <span>&bull;</span>
           <p>{email}</p>
+          <span>&bull;</span>
+          <StatusBadge status={status}>{status}</StatusBadge>
         </Guest>
 
         <CustomerDetails>
           <h3>Customer Details</h3>
-          <p><strong>Name:</strong> {customerName}</p>
-          <p><strong>Email:</strong> {customerEmail}</p>
-          <p><strong>Phone:</strong> {phoneNumber}</p>
-          <p><strong>Address:</strong> {address}</p>
+          <p><strong>Name:</strong> {fullname}</p>
+          <p><strong>Email:</strong> {email}</p>
+          <p><strong>Phone:</strong> {phone}</p>
           <p><strong>National ID:</strong> {nationalID}</p>
           <p><strong>Country:</strong> {country}</p>
         </CustomerDetails>
@@ -163,9 +236,7 @@ function BookingDataBox({ booking, customer }) {
 
       <Footer>
         <p>
-          {isValidDate(created_at)
-            ? `Booked on ${format(new Date(created_at), "EEE, MMM dd yyyy, p")}`
-            : "Booking date unknown"}
+          Booked on {formattedCreatedAt}
         </p>
       </Footer>
     </StyledBookingDataBox>

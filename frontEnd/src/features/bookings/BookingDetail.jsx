@@ -15,8 +15,8 @@ import Modal from "../../ui/Modal";
 import ConfirmDelete from "../../ui/ConfirmDelete";
 import Empty from "../../ui/Empty";
 import useDetailBooking from "../../api/useDetailBookings";
-import useCheckIn from "../../api/useCheckin";
-import useCheckout from "../../api/useCheckout"; // Import thêm useCheckout
+import useCheckout from "../../api/useCheckout";
+import useDeleteBooking from "../../api/useDeleteBookings"; // Import the delete hook
 
 const HeadingGroup = styled.div`
   display: flex;
@@ -26,12 +26,12 @@ const HeadingGroup = styled.div`
 
 function BookingDetail() {
   const { id } = useParams();
-  const { booking, loading, error, refetch } = useDetailBooking(id); // Thêm `refetch` từ useDetailBooking
+  const { booking, loading, error, refetch } = useDetailBooking(id);
   const moveBack = useMoveBack();
   const navigate = useNavigate();
 
-  const { checkInBooking, isCheckingIn } = useCheckIn(); // Hook check-in
-  const { checkoutBooking, isCheckingOut } = useCheckout(); // Hook checkout
+  const { checkoutBooking, isCheckingOut } = useCheckout();
+  const { deleteBooking, isDeleting } = useDeleteBooking(); // Add the delete hook
 
   if (loading) return <Spinner />;
   if (error) return <Empty resourceName="booking" />;
@@ -41,52 +41,73 @@ function BookingDetail() {
 
   const {
     id: bookingId,
-    cabin_name,
-    guest_name,
-    guest_email,
-    start_date,
-    end_date,
-    nights,
+    created_at,
+    cabin_name: cabinName,
+    guest_name: guestName,
+    guest_email: guestEmail,
+    start_date: startDate,
+    end_date: endDate,
+    nights: numNights,
     status,
-    amount,
+    amount: totalPrice,
     customer,
   } = booking;
 
   const statusToTagName = {
     unconfirmed: "blue",
-    "checked-in": "green",
-    "checked-out": "silver",
+    "checked_in": "green",
+    "checked_out": "silver",
   };
 
-  // Hàm xử lý `checkin`
-  async function handleCheckIn() {
-    try {
-      await checkInBooking(bookingId);
-      alert(`Checked in booking #${bookingId}`);
-      refetch(); // Gọi lại API để cập nhật trạng thái
-    } catch (error) {
-      console.error("Error checking in booking:", error);
-    }
+  // Transform the data to match the structure expected by BookingDataBox
+  const transformedBooking = {
+    id: bookingId,
+    created_at,
+    startDate,
+    endDate,
+    numNights,
+    status,
+    totalPrice,
+    cabinName,
+    guest: {
+      fullname: guestName,
+      email: guestEmail,
+    },
+    // Use the customer object directly as it contains all the needed fields
+    customer: customer || {
+      name: guestName,
+      email: guestEmail,
+      phone_number: "N/A",
+      address: "N/A",
+      national_id: "N/A",
+      country: "N/A",
+    },
+  };
+
+  function handleNavigateToCheckin() {
+    navigate(`/checkin/${bookingId}`);
   }
 
-  // Hàm xử lý `checkout`
   async function handleCheckout() {
     try {
       await checkoutBooking(bookingId);
       alert(`Checked out booking #${bookingId}`);
-      refetch(); // Gọi lại API để cập nhật trạng thái
+      refetch();
     } catch (error) {
       console.error("Error checking out booking:", error);
     }
   }
 
-  // Hàm xử lý `deleteBooking`
+  // Fixed delete handler to actually call the deleteBooking function
   async function handleDelete() {
     try {
-      alert(`Deleted booking #${bookingId}`);
+      await deleteBooking(bookingId);
+      alert(`Booking #${bookingId} has been deleted successfully`);
+      // Navigate back after successful deletion
       navigate(-1);
     } catch (error) {
       console.error("Error deleting booking:", error);
+      alert("Failed to delete booking. Please try again.");
     }
   }
 
@@ -95,37 +116,26 @@ function BookingDetail() {
       <Row type="horizontal">
         <HeadingGroup>
           <Heading as="h1">Booking #{bookingId}</Heading>
-          <Tag type={statusToTagName[status]}>{status.replace("-", " ")}</Tag>
+          <Tag type={statusToTagName[status] || "blue"}>
+            {status?.replace("-", " ") || "unknown"}
+          </Tag>
         </HeadingGroup>
         <ButtonText onClick={moveBack}>&larr; Back</ButtonText>
       </Row>
 
-      {/* Gửi dữ liệu booking và customer vào BookingDataBox */}
-      <BookingDataBox
-        booking={{
-          cabin_name,
-          guest_name,
-          guest_email,
-          start_date,
-          end_date,
-          nights,
-          amount,
-        }}
-        customer={customer}
-      />
+      <BookingDataBox booking={transformedBooking} />
 
       <ButtonGroup>
         {status === "unconfirmed" && (
           <Button
             icon={<HiArrowDownOnSquare />}
-            onClick={handleCheckIn}
-            disabled={isCheckingIn}
+            onClick={handleNavigateToCheckin}
           >
-            {isCheckingIn ? "Checking in..." : "Check in"}
+            Check in
           </Button>
         )}
 
-        {status === "checked-in" && (
+        {status === "checked_in" && (
           <Button
             icon={<HiArrowUpOnSquare />}
             onClick={handleCheckout}
@@ -137,13 +147,16 @@ function BookingDetail() {
 
         <Modal>
           <Modal.Open opens="delete">
-            <Button variations="danger">Delete Booking</Button>
+            <Button variation="danger" disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete Booking"}
+            </Button>
           </Modal.Open>
 
           <Modal.Window name="delete">
             <ConfirmDelete
               resourceName="booking"
               onConfirm={handleDelete}
+              disabled={isDeleting}
             />
           </Modal.Window>
         </Modal>

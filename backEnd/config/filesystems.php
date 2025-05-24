@@ -27,6 +27,7 @@ return [
     | Supported Drivers: "local", "ftp", "sftp", "s3"
     |
     */
+    'image_directory_permissions' => env('IMAGE_DIRECTORY_PERMISSIONS', 0755),
 
     'disks' => [
 

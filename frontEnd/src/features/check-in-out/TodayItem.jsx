@@ -30,8 +30,8 @@ function TodayItem({ activity }) {
   return (
     <StyledTodayItem>
       {/* Hiển thị Tag dựa trên trạng thái */}
-      {status === "unconfirmed" && <Tag type="green">Arriving</Tag>}
-      {status === "checked-in" && <Tag type="blue">Departing</Tag>}
+      {status === "unconfirmed" && <Tag type="blue">Arriving</Tag>}
+      {status === "checked_in" && <Tag type="green">Departed</Tag>}
 
       {/* Kiểm tra xem guest có tồn tại trước khi render Flag */}
       {guest?.countryFlag ? (
@@ -55,7 +55,7 @@ function TodayItem({ activity }) {
           Check in
         </Button>
       )}
-      {status === "checked-in" && <CheckoutButton bookingId={id} />}
+      {status === "checked_in" && <CheckoutButton bookingId={id} />}
     </StyledTodayItem>
   );
 }

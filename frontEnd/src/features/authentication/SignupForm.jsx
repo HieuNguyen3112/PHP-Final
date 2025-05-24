@@ -1,36 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Button from "../../ui/Button";
 import Form from "../../ui/Form";
 import FormRow from "../../ui/FormRow";
 import Input from "../../ui/Input";
-
-// Email regex: /\S+@\S+\.\S+/
+import useCreateUser from "../../api/useCreateUser";
+import { toast } from "react-hot-toast";
 
 function SignupForm() {
-  const [isPending, setIsPending] = useState(false);
   const [message, setMessage] = useState("");
+  
+  // Use the custom hook for creating users
+  const { 
+    createUser, 
+    isCreating, 
+    error, 
+    success, 
+    userData 
+  } = useCreateUser();
 
   const { register, formState, handleSubmit, reset } = useForm();
   const { errors } = formState;
 
-  function onSubmit({ fullName, email, password }) {
-    setIsPending(true);
+  // Show success or error notifications
+  useEffect(() => {
+    if (success) {
+      toast.success("User registered successfully!");
+      setMessage("User registered successfully!");
+      reset(); // Reset the form on success
+    }
+    
+    if (error) {
+      toast.error(error);
+      setMessage(error);
+    }
+  }, [success, error, reset]);
 
-    // Mô phỏng quá trình đăng ký người dùng
-    setTimeout(() => {
-      // Kiểm tra dữ liệu tĩnh
-      const mockEmail = "test@example.com";
-
-      if (email === mockEmail) {
-        setMessage("This email is already registered.");
-      } else {
-        setMessage("User registered successfully!");
-      }
-
-      setIsPending(false);
-      reset();
-    }, 1500);
+  async function onSubmit(data) {
+    setMessage("");
+    
+    try {
+      await createUser(data);
+    } catch (err) {
+      // Error is already handled in the hook
+    }
   }
 
   return (
@@ -39,7 +52,7 @@ function SignupForm() {
         <Input
           type="text"
           id="fullName"
-          disabled={isPending}
+          disabled={isCreating}
           {...register("fullName", {
             required: "This field is required",
           })}
@@ -50,7 +63,7 @@ function SignupForm() {
         <Input
           type="email"
           id="email"
-          disabled={isPending}
+          disabled={isCreating}
           {...register("email", {
             required: "This field is required",
             pattern: {
@@ -65,7 +78,7 @@ function SignupForm() {
         <Input
           type="password"
           id="password"
-          disabled={isPending}
+          disabled={isCreating}
           {...register("password", {
             required: "This field is required",
             minLength: {
@@ -80,7 +93,7 @@ function SignupForm() {
         <Input
           type="password"
           id="passwordConfirm"
-          disabled={isPending}
+          disabled={isCreating}
           {...register("passwordConfirm", {
             required: "This field is required",
             validate: (value, formValues) => {
@@ -92,19 +105,26 @@ function SignupForm() {
 
       <FormRow>
         <Button
-          variations="secondary"
+          variation="secondary"
           type="reset"
-          disabled={isPending}
-          onClick={reset}
+          disabled={isCreating}
+          onClick={() => {
+            reset();
+            setMessage("");
+          }}
         >
           Cancel
         </Button>
-        <Button disabled={isPending}>
-          {!isPending ? "Create new user" : "Creating..."}
+        <Button disabled={isCreating}>
+          {!isCreating ? "Create new user" : "Creating..."}
         </Button>
       </FormRow>
 
-      {message && <p>{message}</p>}
+      {message && (
+        <p className={success ? "text-success" : "text-error"}>
+          {message}
+        </p>
+      )}
     </Form>
   );
 }

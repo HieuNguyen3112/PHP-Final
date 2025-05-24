@@ -21,7 +21,16 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar_id'
     ];
+
+    /**
+     * Get the avatar image associated with the user.
+     */
+    public function avatar()
+    {
+        return $this->belongsTo(Pic::class, 'avatar_id');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -41,4 +50,25 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    
+    /**
+     * Get avatar URL attribute
+     * 
+     * @return string|null
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar_id) {
+            $pic = $this->avatar;
+            if ($pic) {
+                return $pic->url;
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Append avatar_url to JSON response
+     */
+    protected $appends = ['avatar_url'];
 }

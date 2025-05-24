@@ -1,9 +1,9 @@
 import styled from "styled-components";
-
 import Heading from "../../ui/Heading";
 import Row from "../../ui/Row";
 import Spinner from "../../ui/Spinner";
 import TodayItem from "./TodayItem";
+import { isSameDay, parseISO } from "date-fns";
 
 const StyledToday = styled.div`
   /* Box */
@@ -37,25 +37,59 @@ const NoActivity = styled.p`
   margin-top: 0.8rem;
 `;
 
-function TodayActivity() {
-  // Dữ liệu tĩnh thay thế cho `useTodayActivity`
-  const activities = [
-    { id: 1, description: "Checked in Cabin A" },
-    { id: 2, description: "Checked out from Cabin B" },
-    { id: 3, description: "New booking for Cabin C" },
-  ];
-  const isLoading = false; // Giả lập trạng thái tải dữ liệu
+function TodayActivity({ activities = [] }) {
+  const isLoading = false;
+  const today = new Date();
+
+  // Filter activities to only include unconfirmed or checked_in bookings for today
+  const todayActivities = activities.filter(activity => {
+    // Ensure we have valid data
+    if (!activity.startDate && !activity.endDate) return false;
+    
+    // Check if this is a relevant status
+    const isRelevantStatus =  activity.status === "unconfirmed" || activity.status === "checked_in";
+    
+    // For unconfirmed bookings, check if start date is today (arrivals)
+    if (activity.status === "unconfirmed") {
+      return isRelevantStatus && activity.startDate && isSameDay(parseISO(activity.startDate), today);
+    }
+    
+    // For checked_in bookings, check if end date is today (departures)
+    if (activity.status === "checked_in") {
+      return isRelevantStatus && activity.startDate && isSameDay(parseISO(activity.startDate), today);
+    }
+    
+    return false;
+  });
+
+  // Process activities to add country flag paths
+  const processedActivities = todayActivities.map(activity => {
+    // Ensure we have guest data
+    if (!activity.guest) return activity;
+    
+    // Create country flag path - lowercase country code
+    const country = activity.guest.country?.toLowerCase() || "vn";
+    const countryFlag = `/flags/${country}.png`;
+    
+    return {
+      ...activity,
+      guest: {
+        ...activity.guest,
+        countryFlag
+      }
+    };
+  });
 
   return (
-    <StyledToday>
+    <StyledToday> 
       <Row type="horizontal">
         <Heading as="h2">Today</Heading>
       </Row>
 
       {!isLoading ? (
-        activities.length > 0 ? (
+        processedActivities.length > 0 ? (
           <TodayList>
-            {activities.map((activity) => (
+            {processedActivities.map((activity) => (
               <TodayItem activity={activity} key={activity.id} />
             ))}
           </TodayList>

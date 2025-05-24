@@ -57,6 +57,7 @@ function BookingRow({
     guest = {},
     cabins = {},
   },
+  onDeleteSuccess, // Add this prop to handle refresh after deletion
 }) {
   const navigate = useNavigate();
   const { checkoutBooking, isCheckingOut, checkoutError } = useCheckoutBooking();
@@ -64,19 +65,35 @@ function BookingRow({
 
   const statusToTagName = {
     unconfirmed: "blue",
-    "checked-in": "green",
-    "checked-out": "silver",
+    "checked_in": "green",
+    "checked_out": "silver",
   };
 
   const handleCheckout = async () => {
     await checkoutBooking(bookingId);
     if (checkoutError) alert("Lỗi khi checkout booking");
+    navigate(0);
   };
 
-  const handleDelete = async () => {
-    await deleteBooking(bookingId);
-    if (deleteError) alert("Lỗi khi xóa booking");
-  };
+  // Fixed handleDelete function to actually call deleteBooking
+  async function handleDelete() {
+    try {
+      // Call the deleteBooking function from the hook
+      await deleteBooking(bookingId);
+      
+      // Show success message
+      alert(`Booking #${bookingId} has been deleted successfully`);
+      
+      // Refresh the bookings list if a callback was provided
+      //  onDeleteSuccess();
+      
+      // Alternative: refresh the current page
+      navigate(0);
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+      alert(`Failed to delete booking: ${deleteError || error.message}`);
+    }
+  }
 
   return (
     <Table.Row>
@@ -124,7 +141,7 @@ function BookingRow({
               </Menus.Button>
             )}
 
-            {status === "checked-in" && (
+            {status === "checked_in" && (
               <Menus.Button
                 icon={<HiArrowUpOnSquare />}
                 onClick={handleCheckout}
@@ -132,10 +149,13 @@ function BookingRow({
               >
                 {isCheckingOut ? "Checking out..." : "Check out"}
               </Menus.Button>
+              
             )}
 
             <Modal.Open opens="delete">
-              <Menus.Button icon={<HiTrash />}>Delete booking</Menus.Button>
+              <Menus.Button icon={<HiTrash />} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete booking"}
+              </Menus.Button>
             </Modal.Open>
           </Menus.List>
         </Menus.Menu>
@@ -143,8 +163,8 @@ function BookingRow({
         <Modal.Window name="delete">
           <ConfirmDelete
             resourceName="booking"
-            disabled={isDeleting}
             onConfirm={handleDelete}
+            disabled={isDeleting}
           />
         </Modal.Window>
       </Modal>

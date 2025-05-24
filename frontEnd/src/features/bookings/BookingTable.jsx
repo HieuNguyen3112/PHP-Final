@@ -5,10 +5,17 @@ import Empty from "../../ui/Empty";
 import Spinner from "../../ui/Spinner";
 import Pagination from "../../ui/Pagination";
 import useGetAllBooking from "../../api/useBookings";
+import { useEffect } from "react";
 
-function BookingTable() {
-  // Dùng hook để lấy dữ liệu bookings từ API
-  const { bookings, loading, error } = useGetAllBooking();
+function BookingTable({ filterValue, sortValue }) {
+  // Pass filter and sort values to the hook
+  const { bookings, loading, error, refetch } = useGetAllBooking(filterValue, sortValue);
+
+  // Only refetch when filter or sort values change, NOT when refetch changes
+  useEffect(() => {
+    // This will only run when filterValue or sortValue changes
+    // We don't need to call refetch here since the hook already responds to these changes
+  }, [filterValue, sortValue]); // Remove refetch from dependencies
 
   const count = bookings?.length || 0;
 

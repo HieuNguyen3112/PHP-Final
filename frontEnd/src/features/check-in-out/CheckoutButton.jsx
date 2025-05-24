@@ -1,18 +1,30 @@
 import { useState } from "react";
 import Button from "../../ui/Button";
+import useCheckoutBooking from "../../api/useCheckout";
+import { useNavigate } from "react-router-dom";
 
 function CheckoutButton({ bookingId }) {
   const [isCheckingout, setIsCheckingout] = useState(false);
-
-  // Hàm tĩnh mô phỏng quá trình checkout
-  function handleCheckout() {
+  const { checkoutBooking } = useCheckoutBooking();
+  const navigate = useNavigate(); 
+  async function handleCheckout() {
     setIsCheckingout(true);
 
-    // Giả lập thời gian xử lý checkout
-    setTimeout(() => {
+    try {
+      // Call the real API function from the hook
+      await checkoutBooking(bookingId);
+      
+      // Display alert message after successful checkout
       alert(`Checked out booking with ID: ${bookingId}`);
+    } catch (error) {
+      // If there's an error, alert with error message
+      alert(`Error checking out booking: ${error.message || "Unknown error"}`);
+    } finally {
+      // Reset loading state
+      
       setIsCheckingout(false);
-    }, 1000);
+      navigate(0);
+    }
   }
 
   return (
